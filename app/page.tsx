@@ -32,6 +32,9 @@ export default function Home() {
   // Preview URLs for uploaded files
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [svgPreview, setSvgPreview] = useState<string | null>(null);
+  
+  // Dialog state for gallery items
+  const [showGalleryDialog, setShowGalleryDialog] = useState(false);
 
   // Cleanup object URLs on unmount
   useEffect(() => {
@@ -82,6 +85,14 @@ export default function Home() {
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to fetch barcode data");
+      }
+
+      // Check if this is a gallery item (previewUrl contains "gallery")
+      if (data.previewUrl && data.previewUrl.includes("gallery")) {
+        setShowGalleryDialog(true);
+        setBarcodeData(null);
+        setMessage({ type: "error", text: "Gallery items cannot be edited" });
+        return;
       }
 
       setBarcodeData(data);
@@ -224,6 +235,30 @@ export default function Home() {
               }`}
             >
               {message.text}
+            </div>
+          )}
+
+          {/* Gallery Item Dialog */}
+          {showGalleryDialog && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">
+                  Cannot Edit Gallery Items
+                </h2>
+                <p className="text-gray-700 mb-6">
+                  YOU can't edit gallery items. Gallery items (like holiday designs) are used across multiple products and cannot be modified.
+                </p>
+                <button
+                  onClick={() => {
+                    setShowGalleryDialog(false);
+                    setBarcodeUrl("");
+                    setMessage(null);
+                  }}
+                  className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
+                >
+                  OK
+                </button>
+              </div>
             </div>
           )}
 

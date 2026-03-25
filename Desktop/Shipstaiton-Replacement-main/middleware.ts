@@ -64,7 +64,16 @@ export async function middleware(request: NextRequest) {
 
   // Verify the JWT is valid (not expired, correct signature)
   try {
-    const secret = new TextEncoder().encode(process.env.SESSION_SECRET || '')
+    const sessionSecret = process.env.SESSION_SECRET || ''
+    const secret = new TextEncoder().encode(sessionSecret)
+    if (secret.length < 32) {
+      console.error(
+        '[Middleware] SESSION_SECRET is missing or shorter than 32 characters. ' +
+          'Login may succeed but navigation will loop to /login. ' +
+          'With Docker/standalone builds, SESSION_SECRET must be present when you run `next build` (not only at container start).'
+      )
+      return redirectOrReject(request, pathname)
+    }
     const { payload } = await jwtVerify(sessionCookie.value, secret, { algorithms: ['HS256'] })
 
     const isAdmin = (payload.isAdmin as boolean) || false
